@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Hub Ultimate</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #eee; margin: 0; padding: 20px; }
+        
+        /* Layout & Inputs */
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        input { flex: 1; padding: 12px; border-radius: 8px; border: none; background: #2a2a2a; color: white; outline: none; }
+        button { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; background: #e74c3c; color: white; font-weight: bold; }
+        button:hover { background: #c0392b; }
+        .btn-sec { background: #34495e; }
+
+        /* Categories Bar */
+        #categoriesBar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; white-space: nowrap; scrollbar-width: thin; }
+        .tag { background: #2c3e50; padding: 6px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #34495e; transition: 0.3s; }
+        .tag:hover { background: #e74c3c; border-color: #e74c3c; }
+
+        /* Grid Cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .card { background: #1e1e1e; border-radius: 8px; overflow: hidden; cursor: pointer; transition: 0.2s; position: relative; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .card img { width: 100%; height: 230px; object-fit: cover; }
+        .card-info { padding: 10px; font-size: 14px; }
+        .card-title { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-sub { font-size: 12px; color: #aaa; margin-top: 3px; }
+
+        /* --- ESTILOS DEL MODAL (ANIME INFO) --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; overflow-y: auto; backdrop-filter: blur(5px); }
+        .modal-content { max-width: 900px; margin: 40px auto; background: #1a1a1a; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 25px; cursor: pointer; color: #fff; z-index: 10; background: rgba(0,0,0,0.5); border-radius: 50%; width: 40px; height: 40px; text-align: center; line-height: 40px; }
+
+        /* Header con Banner */
+        .anime-banner { width: 100%; height: 250px; background-size: cover; background-position: center; position: relative; }
+        .anime-banner::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to top, #1a1a1a, transparent); }
+        
+        .anime-body { padding: 20px; display: flex; gap: 30px; margin-top: -80px; position: relative; z-index: 2; flex-wrap: wrap; }
+        .anime-poster { width: 220px; border-radius: 8px; border: 4px solid #1a1a1a; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        
+        .anime-details { flex: 1; min-width: 300px; }
+        .anime-title { font-size: 28px; font-weight: bold; margin: 0; }
+        .anime-alt { font-size: 14px; color: #aaa; font-style: italic; margin-bottom: 10px; }
+        
+        .stats-row { display: flex; gap: 15px; align-items: center; margin: 10px 0; font-size: 14px; }
+        .status-badge { padding: 4px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 11px; }
+        .status-emision { background: #2ecc71; color: #000; }
+        .status-finalizado { background: #e74c3c; color: white; }
+        
+        .rating { color: #f1c40f; font-weight: bold; font-size: 16px; }
+        
+        .genres { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 15px; }
+        .genre-tag { background: #34495e; padding: 3px 10px; border-radius: 12px; font-size: 12px; }
+
+        .synopsis { line-height: 1.6; color: #ddd; background: #222; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+
+        .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px; }
+        .ep-btn { background: #333; padding: 12px 0; text-align: center; border-radius: 4px; cursor: pointer; font-weight: bold; color: #fff; transition: 0.2s; }
+        .ep-btn:hover { background: #3498db; transform: scale(1.05); }
+
+        /* Player */
+        iframe { width: 100%; height: 500px; border: none; background: #000; }
+        .srv-list { padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .srv-btn { background: #2980b9; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <button onclick="cargarInicio()" class="btn-sec">🏠 Inicio</button>
+            <input type="text" id="searchIn" placeholder="Buscar anime...">
+            <button onclick="buscar()">🔍 Buscar</button>
+        </div>
+
+        <div id="categoriesBar">Cargando categorías...</div>
+
+        <h2 id="sectionTitle" style="border-left: 5px solid #e74c3c; padding-left: 10px;">🔥 Novedades</h2>
+        <div id="mainGrid" class="grid"></div>
+    </div>
+
+    <!-- MODAL INFO ANIME -->
+    <div id="animeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarModal('animeModal')">&times;</span>
+            <div id="animeContent"></div>
+        </div>
+    </div>
+
+    <!-- MODAL REPRODUCTOR -->
+    <div id="playerModal" class="modal" style="z-index: 200;">
+        <div class="modal-content" style="max-width: 1000px;">
+            <span class="close-modal" onclick="cerrarModal('playerModal')">&times;</span>
+            <div style="background:black;">
+                <iframe id="videoFrame" src=""></iframe>
+            </div>
+            <div id="serverList" class="srv-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://localhost:3000";
+        const KEY = "super_secreto_123";
+
+        window.onload = () => {
+            cargarInicio();
+            cargarCategorias();
+        };
+
+        // --- CARGAR CATEGORÍAS (AHORA SÍ FUNCIONA) ---
+        async function cargarCategorias() {
+            try {
+                const res = await fetch(`${API}/categorias?key=${KEY}`);
+                const data = await res.json();
+                const bar = document.getElementById('categoriesBar');
+                
+                if(data.data.generos.length === 0) {
+                    bar.innerHTML = "No se pudieron cargar categorías (recarga la página).";
+                    return;
+                }
+
+                bar.innerHTML = "";
+                data.data.generos.forEach(gen => {
+                    const tag = document.createElement('span');
+                    tag.className = 'tag';
+                    tag.innerText = gen.nombre;
+                    tag.onclick = () => {
+                        document.getElementById('searchIn').value = gen.nombre;
+                        buscar();
+                    };
+                    bar.appendChild(tag);
+                });
+            } catch(e) { console.error("Error categorías", e); }
+        }
+
+        async function cargarInicio() {
+            document.getElementById('sectionTitle').innerText = "🔥 Novedades";
+            const grid = document.getElementById('mainGrid');
+            grid.innerHTML = "Cargando...";
+            const res = await fetch(`${API}/inicio?key=${KEY}`);
+            const data = await res.json();
+            grid.innerHTML = "";
+            data.data.episodiosRecientes.forEach(ep => renderCard(grid, ep, true));
+        }
+
+        async function buscar() {
+            const q = document.getElementById('searchIn').value;
+            if(!q) return;
+            document.getElementById('sectionTitle').innerText = `🔎 Resultados: ${q}`;
+            const grid = document.getElementById('mainGrid');
+            grid.innerHTML = "Buscando...";
+            const res = await fetch(`${API}/buscar?q=${encodeURIComponent(q)}&key=${KEY}`);
+            const data = await res.json();
+            grid.innerHTML = "";
+            if(data.data.length === 0) grid.innerHTML = "Sin resultados.";
+            data.data.forEach(anime => renderCard(grid, anime, false));
+        }
+
+        function renderCard(container, item, esEpisodio) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="${item.imagen || 'https://via.placeholder.com/200'}" loading="lazy">
+                <div class="card-info">
+                    <div class="card-title">${item.titulo}</div>
+                    <div class="card-sub">${esEpisodio ? 'Capítulo ' + item.capitulo : item.tipo}</div>
+                </div>
+            `;
+            card.onclick = () => esEpisodio ? abrirPlayer(item.url, `${item.titulo} ${item.capitulo}`) : abrirInfoAnime(item.url);
+            container.appendChild(card);
+        }
+
+        // --- VISTA DETALLADA DEL ANIME ---
+        async function abrirInfoAnime(url) {
+            const modal = document.getElementById('animeModal');
+            const content = document.getElementById('animeContent');
+            modal.style.display = 'block';
+            content.innerHTML = "<h2 style='text-align:center; padding:50px;'>⏳ Cargando datos del anime...</h2>";
+
+            try {
+                const res = await fetch(`${API}/info?url=${encodeURIComponent(url)}&key=${KEY}`);
+                const data = await res.json();
+                const info = data.data;
+
+                // Definir color del estado
+                const statusClass = info.estado.toLowerCase().includes('emision') ? 'status-emision' : 'status-finalizado';
+                const bannerUrl = info.banner ? `https://www3.animeflv.net${info.banner}` : 'https://via.placeholder.com/800x200';
+                const posterUrl = `https://www3.animeflv.net${info.poster}`;
+
+                // Generar HTML de géneros
+                const genresHTML = info.generos.map(g => `<span class="genre-tag">${g}</span>`).join("");
+                
+                // Generar HTML de episodios
+                const epsHTML = info.episodios.map(ep => 
+                    `<div class="ep-btn" onclick="abrirPlayer('${ep.url}', 'Episodio ${ep.numero}')">${ep.numero}</div>`
+                ).join("");
+
+                content.innerHTML = `
+                    <div class="anime-banner" style="background-image: url('${bannerUrl}');"></div>
+                    <div class="anime-body">
+                        <img src="${posterUrl}" class="anime-poster">
+                        <div class="anime-details">
+                            <h1 class="anime-title">${info.titulo}</h1>
+                            <div class="anime-alt">${info.titulo_alt}</div>
+                            
+                            <div class="stats-row">
+                                <span class="status-badge ${statusClass}">${info.estado}</span>
+                                <span class="rating">⭐ ${info.rating}</span>
+                                <span style="font-size:12px; color:#aaa;">(${info.votos} votos)</span>
+                                <span style="background:#555; padding:2px 8px; border-radius:4px; font-size:11px;">${info.tipo}</span>
+                            </div>
+
+                            <div class="genres">${genresHTML}</div>
+                            <div class="synopsis">${info.sinopsis}</div>
+
+                            <h3>📺 Episodios (${info.episodios.length})</h3>
+                            <div class="ep-grid">${epsHTML}</div>
+                        </div>
+                    </div>
+                `;
+            } catch(e) { content.innerHTML = "<p style='padding:20px; color:red'>Error al cargar información.</p>"; }
+        }
+
+        async function abrirPlayer(url, title) {
+            document.getElementById('playerModal').style.display = 'block';
+            const frame = document.getElementById('videoFrame');
+            const list = document.getElementById('serverList');
+            list.innerHTML = "Cargando opciones de reproducción...";
+            frame.src = "";
+
+            const res = await fetch(`${API}/obtener-links?url=${encodeURIComponent(url)}&key=${KEY}`);
+            const data = await res.json();
+            
+            list.innerHTML = "";
+            if(data.data.SUB && data.data.SUB.length > 0) {
+                data.data.SUB.forEach(srv => {
+                    const btn = document.createElement('button');
+                    btn.className = 'srv-btn';
+                    btn.innerText = srv.server;
+                    btn.onclick = () => frame.src = srv.code;
+                    list.appendChild(btn);
+                });
+                frame.src = data.data.SUB[0].code;
+            } else {
+                list.innerHTML = "No se encontraron videos.";
+            }
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).style.display = 'none';
+            if(id === 'playerModal') document.getElementById('videoFrame').src = "";
+        }
+    </script>
+</body>
+</html>
